@@ -1,0 +1,13 @@
+
+
+poetry export -f requirements.txt --output requirements.txt
+
+BACKGROUND_TASK_DISABLED=true PYTHONWARNINGS="ignore" pytest -s -v
+
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
+
+docker rm $(docker ps -a -q)
+
+docker volume prune
+
+docker compose up --build

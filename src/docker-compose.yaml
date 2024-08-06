@@ -1,0 +1,87 @@
+services:
+  auth-service:
+    build:
+      context: ./auth-service
+    # # enable this if you want to view the API docs at localhost:8001
+    # ports:
+    #   - "8002:8000"
+    depends_on:
+      - postgres
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+    networks:
+      - backend
+
+  task-service:
+    build:
+      context: ./task-service
+    # # enable this if you want to view the API docs at localhost:8001
+    # ports:
+    #   - "8001:8000"
+    depends_on:
+      - postgres
+      - rabbitmq
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+    networks:
+      - backend
+
+  notification-service:
+    build:
+      context: ./notification-service
+    depends_on:
+      - rabbitmq
+    environment:
+      - EMAIL_SECRET_KEY=${EMAIL_SECRET_KEY}
+      - EMAIL_SENDER_MAIL=${EMAIL_SENDER_MAIL}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+    networks:
+      - backend
+
+  gateway:
+    build:
+      context: ./gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth-service
+      - task-service
+      - notification-service
+    networks:
+      - backend
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - backend
+
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+
+networks:
+  backend:
+    driver: bridge
