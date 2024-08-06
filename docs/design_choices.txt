@@ -1,0 +1,19 @@
+Scalability:
+- All micro service are docker images. Hence they could easily be scaled based on the load. Auth and Task services
+  are running on ASGI server uvivorn which support async communication. On top of that we have gunicorn which manages
+  the uvicorn workers. In current deployment, there are 4 uvicorn workers running at a time in one service.
+- Notification consumer also support async communication. Hence, it can handle multiple request at the same time.
+- For further scalability, we can deploy the existing architute on kubernetes cluster which can help us to scale on even
+  higher loads.
+
+Resiliency:
+- Noitification server and task server will self-heal even if rabbitmq container goes down or restarts.
+- RabbitMQ support durable messages which means even if the notification server is loaded, messages wouldn't be lost.
+- Postgres is attached to volume. Hence, the data will persist even if docker container goes down.
+
+Best Practices:
+- For code best practices, we are using black as the formatter and ruff and mypy as the linters which ensures code quality.
+- Auth, gateway and task services are developed in FastAPI, which is tightly bound with python type hinting and pydantic schemas.
+  Hence, the code follows the standard best practices.
+- FastAPI support swagger docs. We can view the docs on /docs endpoint.
+- All micro services have their docker images. Hence, they can be easily deployed on any environment.
